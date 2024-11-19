@@ -1,7 +1,0 @@
-{
-  "functions": {
-    "api/*.py": {
-      "runtime": "python3.10"  // Or another supported Python version (3.9, 3.8, etc.)
-    }
-  }
-}
