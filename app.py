@@ -31,28 +31,38 @@ with col2:
 
 # Calculation
 
+import streamlit as st
+import pandas as pd
+
+# ... (styling and input fields - same as before)
+
+# Calculation
 if st.button("Calculate"):
     year = 0
     fund_start = current_corpus
     data = []
 
-    while True:  # Iterate indefinitely until target is met
+    while True:
         year += 1
-        age = current_age + year
-        annual_income = current_income * (1 + annual_increase)**year  # Compounding annual increase
+        age = current_age + year - 1  # Correct age calculation
+        annual_income = current_income * (1 + annual_increase)**(year - 1)
         amount_invested = annual_income * investment_proportion
-        fund_end = fund_start + amount_invested  # Calculate fund_end before investment return for accurate check
 
-        if fund_end >= target_corpus: # Check if target reached BEFORE applying investment returns
-            data.append([year, age, fund_start, annual_income, amount_invested, fund_start * investment_return, fund_end]) # Still keep original values even if fund_end is more than the target
-            break  # Exit loop if target reached
+        # Key Change: Calculate fund_end *before* investment return for checking
+        fund_mid = fund_start + amount_invested
 
-        investment_return_amount = fund_start * investment_return
-        fund_end = fund_end + investment_return_amount # Added investment return only if target is not reached in a year.
-        fund_start = fund_end
-        
-        data.append([year, age, fund_start, annual_income, amount_invested, investment_return_amount, fund_end]) # Values for each passing year
+        if fund_mid >= target_corpus:
+            investment_return_amount = fund_start * investment_return  # Calculate return only for display
+            fund_end = fund_mid + investment_return_amount # Add investment return for final year calculation
+            data.append([year, age, fund_start, annual_income, amount_invested, investment_return_amount, fund_end])
+            break #break here to not add an extra year
+
+        investment_return_amount = fund_start * investment_return  # Return calculated on initial fund
+        fund_end = fund_mid + investment_return_amount
+        data.append([year, age, fund_start, annual_income, amount_invested, investment_return_amount, fund_end])
+        fund_start = fund_end  # Update for next year
 
     df = pd.DataFrame(data, columns=['Year', 'Age', 'Fund at Start', 'Annual Income', 'Amount Invested', 'Investment Return', 'Fund at End'])
+
     st.write(f"You will achieve your target at the age of {age}")
-    st.dataframe(df)
+    st.dataframe(df)  # Display the DataFrame
