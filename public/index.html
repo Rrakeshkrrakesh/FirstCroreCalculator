@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>First Crore Calculator</title>
+</head>
+<body>
+    <h1>First Crore Calculator</h1>
+
+    <form id="calculator-form">
+        <label for="currentAge">Current Age:</label>
+        <input type="number" id="currentAge" name="currentAge" required><br><br>
+
+        <label for="currentCorpus">Current Corpus:</label>
+        <input type="number" id="currentCorpus" name="currentCorpus" required><br><br>
+
+        <label for="currentIncome">Current Annual Income:</label>
+        <input type="number" id="currentIncome" name="currentIncome" required><br><br>
+
+        <label for="annualIncrease">Annual Increase in Salary (%):</label>
+        <input type="number" id="annualIncrease" name="annualIncrease" required><br><br>
+
+        <label for="investmentProportion">Proportion of Income Invested (%):</label>
+        <input type="number" id="investmentProportion" name="investmentProportion" required><br><br>
+
+        <label for="investmentReturn">Expected Investment Return (%):</label>
+        <input type="number" id="investmentReturn" name="investmentReturn" required><br><br>
+
+        <label for="targetCorpus">Target Corpus (e.g., 10000000 for 1 crore):</label>
+        <input type="number" id="targetCorpus" name="targetCorpus" value="10000000" required><br><br>
+
+        <button type="submit">Calculate</button>
+    </form>
+
+    <div id="result"></div>
+
+    <script>
+        const form = document.getElementById('calculator-form');
+        const resultDiv = document.getElementById('result');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const formData = new FormData(form);
+            const data = {};
+            formData.forEach((value, key) => {
+                data[key] = value;
+            });
+
+
+
+            try {
+                const response = await fetch('/api/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                resultDiv.textContent = `You will achieve your target at the age of ${result.ageAtTarget}`;
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.textContent = 'An error occurred. Please try again.';
+            }
+        });
+
+
+    </script>
+
+</body>
+</html>
