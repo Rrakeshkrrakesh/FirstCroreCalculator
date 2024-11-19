@@ -30,26 +30,28 @@ with col2:
 
 
 # Calculation
+
 if st.button("Calculate"):
     year = 0
     fund_start = current_corpus
     data = []
 
-    while True:
+    while True:  # Iterate indefinitely until target is met
         year += 1
-        age = current_age + year - 1
-        annual_income = current_income * (1 + annual_increase)**(year - 1)
+        age = current_age + year
+        annual_income = current_income * (1 + annual_increase)**year  # Compounding annual increase
         amount_invested = annual_income * investment_proportion
-        investment_return_amount = (fund_start + amount_invested) * investment_return  # Corrected calculation
+        fund_end = fund_start + amount_invested  # Calculate fund_end before investment return for accurate check
 
-        fund_end = fund_start + amount_invested + investment_return_amount
+        if fund_end >= target_corpus: # Check if target reached BEFORE applying investment returns
+            data.append([year, age, fund_start, annual_income, amount_invested, fund_start * investment_return, fund_end]) # Still keep original values even if fund_end is more than the target
+            break  # Exit loop if target reached
 
-        if fund_end >= target_corpus:
-            data.append([year, age, fund_start, annual_income, amount_invested, investment_return_amount, fund_end])
-            break  # Exit loop once target is reached
-
-        data.append([year, age, fund_start, annual_income, amount_invested, investment_return_amount, fund_end])
+        investment_return_amount = fund_start * investment_return
+        fund_end = fund_end + investment_return_amount # Added investment return only if target is not reached in a year.
         fund_start = fund_end
+        
+        data.append([year, age, fund_start, annual_income, amount_invested, investment_return_amount, fund_end]) # Values for each passing year
 
     df = pd.DataFrame(data, columns=['Year', 'Age', 'Fund at Start', 'Annual Income', 'Amount Invested', 'Investment Return', 'Fund at End'])
     st.write(f"You will achieve your target at the age of {age}")
