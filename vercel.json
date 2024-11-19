@@ -1,7 +1,15 @@
 {
-  "functions": {
-    "api/*.py": {
-      "runtime": "python3.10"  # Or your preferred Python version
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/calculate.py",
+      "use": "@vercel/python"
     }
-  }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "app.py"
+    }
+  ]
 }
