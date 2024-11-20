@@ -1,79 +1,67 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 
-st.title("First Crore Calculator")
+# Function to calculate growth
+def calculate_growth(initial_investment, monthly_contribution, annual_return, target_amount):
+    balance = initial_investment
+    years = 0
+    data_points = []
 
-# Styling (Optional - include if you want the custom styles)
-st.markdown("""
-<style>
-div[data-testid="stNumberInput"] {
-    margin-bottom: 10px;
-    width: 200px;
-}
-</style>
-""", unsafe_allow_html=True)
+    while balance < target_amount and years < 50:
+        data_points.append(balance)
+        balance = balance * (1 + annual_return) + (monthly_contribution * 12)
+        years += 1
 
+    data_points.append(balance)  # Append the final balance
+    return years, data_points
 
-# Input form in two columns
-col1, col2 = st.columns(2)
+# Streamlit app
+st.title("First Crore Calculator (₹)")
 
-with col1:
-    current_age = st.number_input("Current Age:", min_value=0, value=30)
-    current_corpus = st.number_input("Current Corpus:", min_value=0, value=75000)
-    current_income = st.number_input("Current Annual Income:", min_value=0, value=400000)
+# Input form
+current_age = st.number_input("Current Age:", min_value=1, value=30)
+initial_investment = st.number_input("Initial Investment (₹):", min_value=0, value=100000)
+monthly_contribution = st.number_input("Monthly Contribution (₹):", min_value=0, value=10000)
+annual_return = st.number_input("Annual Return (%):", min_value=0.0, value=8.0, format="%f") / 100.0
+target_amount = st.number_input("Target Portfolio Value (₹):", min_value=1000000, value=10000000)  # Default ₹1 crore
 
-with col2:
-    annual_increase = st.number_input("Annual Increase in Salary (%):", min_value=0.0, value=0.05, format="%f")
-    investment_proportion = st.number_input("Proportion of Income Invested (%):", min_value=0.0, value=0.80, format="%f")
-    investment_return = st.number_input("Expected Investment Return (%):", min_value=0.0, value=0.12, format="%f")
-    target_corpus = st.number_input("Target Corpus (e.g., 10000000 for 1 crore):", min_value=0, value=10000000)
-
-
-# Calculation
-
-import streamlit as st
-import pandas as pd
-
-# ... (styling and input fields - same as before)
-
-# Calculation
-import streamlit as st
-import pandas as pd
-
-# ... (styling and input fields - same as before)
-
-
-# Calculation
 if st.button("Calculate"):
-    year = 0
-    fund_start = current_corpus
-    data = []
+    years_to_target, data_points = calculate_growth(
+        initial_investment, monthly_contribution, annual_return, target_amount
+    )
 
-    # Correct percentage inputs (divide by 100)
-    annual_increase = annual_increase / 100.0
-    investment_proportion = investment_proportion / 100.0
-    investment_return = investment_return / 100.0
+    if years_to_target < 50:
+        st.write(f"You'll reach ₹{target_amount:,.0f} in {years_to_target} years.")
+        st.write(f"By age {current_age + years_to_target}.")
+    else:
+        st.write("It will take over 50 years to reach your target amount.")
 
-    while True:
-        year += 1
-        age = current_age + year - 1
-        annual_income = current_income * (1 + annual_increase)**(year - 1)
-        amount_invested = annual_income * investment_proportion
-        
-        fund_mid = fund_start + amount_invested # Calculate fund mid before investment return for the final year
+    # Create a DataFrame for the chart
+    df = pd.DataFrame({
+        'Year': range(current_age, current_age + years_to_target + 1),
+        'Portfolio Value (₹)': data_points
+    })
 
-        if fund_mid >= target_corpus:
-            investment_return_amount = fund_start * investment_return #Still calculate investment return if target is met in a particular year
-            fund_end = fund_mid + investment_return_amount
-            data.append([year, age, fund_start, annual_income, amount_invested, investment_return_amount, fund_end])
-            break
+    # Plot the data
+    fig, ax = plt.subplots()
+    ax.plot(df['Year'], df['Portfolio Value (₹)'], marker='o', linestyle='-', color='b')
+    ax.set_title('Portfolio Growth Over Time')
+    ax.set_xlabel('Year')
+    ax.set_ylabel('Portfolio Value (₹)')
+    ax.grid(True)
 
-        investment_return_amount = fund_start * investment_return
-        fund_end = fund_mid + investment_return_amount
-        fund_start = fund_end
-        data.append([year, age, fund_start, annual_income, amount_invested, investment_return_amount, fund_end])
+    # Improve x-axis readability
+    ax.set_xticks(np.arange(current_age, current_age + years_to_target + 1, max(1, years_to_target // 10)))
 
+    st.pyplot(fig)
 
-    df = pd.DataFrame(data, columns=['Year', 'Age', 'Fund at Start', 'Annual Income', 'Amount Invested', 'Investment Return', 'Fund at End'])
-    st.write(f"You will achieve your target at the age of {age}")
-    st.dataframe(df)
+    # Add download option for data
+    csv = df.to_csv(index=False)
+    st.download_button(
+        label="Download Data as CSV",
+        data=csv,
+        file_name='portfolio_growth.csv',
+        mime='text/csv'
+    )
