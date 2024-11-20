@@ -1,6 +1,16 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Function to format numbers into lakhs and crores for display
+def format_amount(amount):
+    if amount >= 1e7:
+        return f"{amount / 1e7:.2f} Cr"
+    elif amount >= 1e5:
+        return f"{amount / 1e5:.2f} L"
+    else:
+        return f"{amount:,.0f} ₹"
 
 # Function to calculate growth with inflation adjustment
 def calculate_growth(initial_investment, monthly_contribution, annual_return, target_amount, inflation_rate):
@@ -26,20 +36,20 @@ col1, col2 = st.columns(2)
 
 with col1:
     current_age = st.number_input("Current Age:", min_value=1, value=30)
-    initial_investment = st.number_input("Initial Investment (₹):", min_value=0, value=100000)
+    initial_investment = st.number_input("Initial Investment (₹ in Lakhs):", min_value=0.0, value=1.0) * 1e5
     annual_return = st.number_input("Annual Return (%):", min_value=0.0, value=8.0, format="%f") / 100.0
     inflation_rate = st.number_input("Estimated Inflation Rate (%):", min_value=0.0, value=5.0, format="%f") / 100.0
 
 with col2:
-    annual_income = st.number_input("Annual Income (₹):", min_value=0, value=600000)
+    annual_income = st.number_input("Annual Income (₹ in Lakhs):", min_value=0.0, value=6.0) * 1e5
     investment_type = st.radio("Choose Investment Type:", ["Percentage of Income", "Fixed Monthly Contribution"])
     if investment_type == "Percentage of Income":
         investment_percentage = st.number_input("Investment Percentage (%):", min_value=0.0, value=20.0, format="%f") / 100.0
         monthly_contribution = (annual_income * investment_percentage) / 12
     else:
-        monthly_contribution = st.number_input("Monthly Contribution (₹):", min_value=0, value=10000)
+        monthly_contribution = st.number_input("Monthly Contribution (₹ in Lakhs):", min_value=0.0, value=1.0) * 1e5
 
-target_amount = st.number_input("Target Portfolio Value (₹):", min_value=1000000, value=10000000)  # Default ₹1 crore
+target_amount = st.number_input("Target Portfolio Value (₹ in Crores):", min_value=0.1, value=1.0) * 1e7  # Default ₹1 crore
 
 if st.button("Calculate"):
     years_to_target, data, final_adjusted_target = calculate_growth(
@@ -51,9 +61,9 @@ if st.button("Calculate"):
     )
 
     if years_to_target < 50:
-        st.write(f"You'll reach ₹{target_amount:,.0f} in {years_to_target} years.")
-        st.write(f"By age {current_age + years_to_target}.")
-        st.write(f"Adjusted for inflation, ₹{target_amount:,.0f} will be worth approximately ₹{final_adjusted_target:,.0f} in {years_to_target} years.")
+        st.write(f"You'll reach **₹{format_amount(target_amount)}** in **{years_to_target} years**.")
+        st.write(f"By age **{current_age + years_to_target}**.")
+        st.write(f"Adjusted for inflation, ₹{format_amount(target_amount)} will be worth approximately **₹{format_amount(final_adjusted_target)}** in **{years_to_target} years**.")
     else:
         st.write("It will take over 50 years to reach your target amount.")
 
@@ -61,19 +71,17 @@ if st.button("Calculate"):
     df = pd.DataFrame(data, columns=['Year', 'Portfolio Value (₹)', 'Adjusted Target (₹)'])
     df['Year'] = df['Year'].apply(lambda x: f"Year {x}")
 
-    # Plot the data
-    fig, ax = plt.subplots()
-    ax.plot(df['Year'], df['Portfolio Value (₹)'], marker='o', linestyle='-', color='b', label='Portfolio Value')
-    ax.plot(df['Year'], df['Adjusted Target (₹)'], marker='x', linestyle='--', color='r', label='Adjusted Target (Inflation)')
-    ax.set_title('Portfolio Growth vs Adjusted Target Over Time')
-    ax.set_xlabel('Year')
-    ax.set_ylabel('Value (₹)')
-    ax.legend()
-    ax.grid(True)
-
-    # Improve x-axis readability
-    ax.set_xticks(range(0, len(df['Year']), max(1, len(df['Year']) // 10)))
+    # Enhanced graph with better visuals
+    sns.set_style("whitegrid")
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.lineplot(x=df['Year'], y=df['Portfolio Value (₹)'], marker='o', label='Portfolio Value', color='blue', ax=ax)
+    sns.lineplot(x=df['Year'], y=df['Adjusted Target (₹)'], marker='x', label='Adjusted Target (Inflation)', color='red', ax=ax)
+    ax.set_title('Portfolio Growth vs Adjusted Target Over Time', fontsize=16, fontweight='bold')
+    ax.set_xlabel('Year', fontsize=12)
+    ax.set_ylabel('Value (₹)', fontsize=12)
+    ax.legend(fontsize=12)
     plt.xticks(rotation=45)
+    plt.tight_layout()
 
     st.pyplot(fig)
 
